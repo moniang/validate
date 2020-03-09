@@ -12,7 +12,8 @@ func main() {
 	var v validate.Validate
 	v.Init() // 初始化验证类
 
-	v.AddRule("check_user", func(value interface{}, rule string, data map[string]interface{}) bool {
+	v.AddRule("check_user", func(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+		fmt.Println("收到了自定义参数", arg)
 		return false
 	}) // 添加自定义规则
 
@@ -23,7 +24,7 @@ func main() {
 	v.Scene("login") // 进入验证场景
 
 	v.SetRule(map[string]string{
-		"user": "require|number|check_user",
+		"user": "require|number|check_user:1,2,你好",
 		"pass": "number",
 		"vali": "require",
 	}) // 设置验证规则

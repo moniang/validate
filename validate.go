@@ -31,9 +31,13 @@ func (v *Validate) Init() *Validate {
 
 // 规则验证
 func (v *Validate) Check(values map[string]interface{}) bool {
+	var (
+		ruleValue []string
+	)
 	for field, rules := range v.checkRule {
 		if v.InArrayString("require", rules) || !isEmpty(field, values) { // 判断有必填验证或者值不为空
 			for _, rule := range rules {
+				rule, ruleValue = getRuleValue(rule)
 				if rule == "require" {
 					if isEmpty(field, values) {
 						v.setError(field, rule)
@@ -41,7 +45,7 @@ func (v *Validate) Check(values map[string]interface{}) bool {
 					}
 				} else {
 					value, _ := values[field]
-					if !v.callRule(rule, value, rule, values) {
+					if !v.callRule(rule, value, rule, values, ruleValue...) {
 						v.setError(field, rule)
 						return false
 					}
@@ -50,6 +54,20 @@ func (v *Validate) Check(values map[string]interface{}) bool {
 		}
 	}
 	return true
+}
+
+// 获取自定义规则参数
+func getRuleValue(rule string) (newRule string, ruleValue []string) {
+	r := strings.Split(rule, ":")
+	rLen := len(r)
+	if rLen == 1 { // 没有后置参数
+		return rule, nil
+	} else if rLen == 2 {
+		param := strings.Split(r[1], ",")
+		return r[0], param
+	} else { // 多个：无法处理后续参数，只返回规则rule
+		return r[0], nil
+	}
 }
 
 // 是否为空值

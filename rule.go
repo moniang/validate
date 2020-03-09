@@ -16,23 +16,23 @@ func (r *Rule) initRule() *Rule {
 }
 
 // 添加自定义规则
-func (r *Rule) AddRule(name string, fun func(value interface{}, rule string, data map[string]interface{}) bool) *Rule {
+func (r *Rule) AddRule(name string, fun func(value interface{}, rule string, data map[string]interface{}, arg ...string) bool) *Rule {
 	r.RuleMethod[name] = fun
 	return r
 }
 
 // 调用规则
-func (r *Rule) callRule(name string, value interface{}, rule string, data map[string]interface{}) bool {
+func (r *Rule) callRule(name string, value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
 	fun, ok := r.RuleMethod[name]
 	if ok {
-		return fun.(func(value interface{}, rule string, data map[string]interface{}) bool)(value, rule, data)
+		return fun.(func(value interface{}, rule string, data map[string]interface{}, arg ...string) bool)(value, rule, data, arg...)
 	} else {
-		panic("rule not fount")
+		panic("rule " + name + "not fount")
 	}
 }
 
 // 判断字段是否为数字，可独立调用
-func (Rule) IsNumber(value interface{}, rule string, data map[string]interface{}) bool {
+func (Rule) IsNumber(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
 	switch value.(type) {
 	case string:
 		result, _ := regexp.MatchString("\\d+", value.(string))
