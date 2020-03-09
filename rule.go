@@ -18,6 +18,13 @@ func (r *Rule) initRule() *Rule {
 	r.RuleMethod["alphaNum"] = r.IsAlphaNum
 	r.RuleMethod["length"] = r.Length
 	r.RuleMethod["colorHex"] = r.IsColorHex
+	r.RuleMethod["notBetween"] = r.NotBetween
+	r.RuleMethod["between"] = r.Between
+	r.RuleMethod["chs"] = r.IsChs
+	r.RuleMethod["chsAlpha"] = r.IsChsAlpha
+	r.RuleMethod["chsDash"] = r.IsChsDash
+	r.RuleMethod["in"] = r.In
+	r.RuleMethod["notIn"] = r.NotIn
 	return r
 }
 
@@ -33,7 +40,7 @@ func (r *Rule) callRule(name string, value interface{}, rule string, data map[st
 	if ok {
 		return fun.(func(value interface{}, rule string, data map[string]interface{}, arg ...string) bool)(value, rule, data, arg...)
 	} else {
-		panic("rule " + name + "not fount")
+		panic("rule " + name + " not fount")
 	}
 }
 
@@ -43,7 +50,7 @@ func (Rule) IsNumber(value interface{}, rule string, data map[string]interface{}
 	case string:
 		result, _ := regexp.MatchString("\\d+", value.(string))
 		return result
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return true
 	}
 	return false
@@ -101,6 +108,92 @@ func (Rule) IsColorHex(value interface{}, rule string, data map[string]interface
 	}
 	m, _ := regexp.MatchString("^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$", value.(string))
 	return m
+}
+
+// 验证某个字段的值只能是汉字、字母、数字和下划线_及破折号-
+func (Rule) IsChsDash(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	t := reflect.TypeOf(value)
+	if t.Name() != "string" {
+		return false
+	}
+	m, _ := regexp.MatchString("^[\u4e00-\u9fa5a-zA-Z0-9_\\-]+$", value.(string))
+	return m
+}
+
+// 验证某个字段的值只能是汉字、字母
+func (Rule) IsChsAlpha(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	t := reflect.TypeOf(value)
+	if t.Name() != "string" {
+		return false
+	}
+	m, _ := regexp.MatchString("^[\u4e00-\u9fa5a-zA-Z]+$", value.(string))
+	return m
+}
+
+// 验证某个字段的值只能是汉字
+func (Rule) IsChs(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	t := reflect.TypeOf(value)
+	if t.Name() != "string" {
+		return false
+	}
+	m, _ := regexp.MatchString("^[\u4e00-\u9fa5]+$", value.(string))
+	return m
+}
+
+// 验证某个字段的值是否在某个区间(数值类型)
+func (r *Rule) Between(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	if len(arg) != 2 {
+		return false
+	}
+	switch value.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		min, _ := strconv.Atoi(arg[0])
+		max, _ := strconv.Atoi(arg[1])
+		if value.(int) > max || value.(int) < min {
+			return false
+		}
+		return true
+	case float32, float64:
+		min, _ := strconv.ParseFloat(arg[0], 64)
+		max, _ := strconv.ParseFloat(arg[1], 64)
+		if value.(float64) > max || value.(float64) < min {
+			return false
+		}
+	}
+
+	return true
+}
+
+// 验证某个字段的值不在某个范围(数值类型)
+func (r *Rule) NotBetween(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	if len(arg) != 2 {
+		return false
+	}
+	if !r.IsNumber(value, rule, nil) {
+		return false
+	}
+	return !r.Between(value, rule, data, arg...)
+}
+
+// 验证某个字段的值是否在指定的值内，只可验证int和string类型,根据value的类型进行判断
+func (r *Rule) In(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	switch value.(type) {
+	case string:
+		return r.InArrayString(value.(string), arg)
+	case int:
+		for _, v := range arg {
+			i, _ := strconv.Atoi(v)
+			if i == value.(int) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// 验证某个字段的值是否不在指定的值内，只可验证int和string类型,根据value的类型进行判断
+func (r *Rule) NotIn(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	return !r.In(value, rule, data, arg...)
 }
 
 // 判断是否在数组中

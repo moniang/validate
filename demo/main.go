@@ -9,6 +9,8 @@ func main() {
 	value := map[string]interface{}{
 		"user": 111,
 		"pass": "123",
+		"a":    6.55,
+		"b":    1,
 	}
 	var v validate.Validate
 	v.Init() // 初始化验证类
@@ -20,14 +22,17 @@ func main() {
 
 	v.SetScene(map[string]string{
 		"login": "user,pass",
+		"test":  "a,b",
 	}) // 设置验证场景字段信息
 
-	v.Scene("login") // 进入验证场景
+	v.Scene("test") // 进入验证场景
 
 	v.SetRule(map[string]string{
 		"user": "require|number|check_user:1,2,你好",
 		"pass": "length:6,20",
 		"vali": "require|length:4",
+		"a":    "between:3,20",
+		"b":    "notIn:1,2,3",
 	}) // 设置验证规则
 
 	v.SetMsg(map[string]string{

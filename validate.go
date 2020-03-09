@@ -151,7 +151,7 @@ func (v *Validate) setError(keyName string, ruleName string) {
 		if ok {
 			v.error = errorMsg
 		} else {
-			v.error = keyName + ":rule " + ruleName + "error"
+			v.error = keyName + " rule[" + ruleName + "] validation failed"
 		}
 	}
 }
