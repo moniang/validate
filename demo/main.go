@@ -10,7 +10,7 @@ func main() {
 		"user": 111,
 		"pass": "123",
 		"a":    6.55,
-		"b":    1,
+		"b":    10,
 	}
 	var v validate.Validate
 	v.Init() // 初始化验证类
@@ -46,6 +46,8 @@ func main() {
 
 	if !v.Check(value) { // 进行判断
 		fmt.Println(v.GetError()) // 输出错误信息
+	} else {
+		fmt.Println("验证通过")
 	}
 
 }
