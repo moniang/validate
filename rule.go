@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"reflect"
 	"regexp"
 	"strconv"
 )
@@ -24,6 +25,8 @@ func (r *Rule) initRule() *Rule {
 	r.RuleMethod["chsDash"] = r.IsChsDash
 	r.RuleMethod["in"] = r.In
 	r.RuleMethod["notIn"] = r.NotIn
+	r.RuleMethod["max"] = r.Max
+	r.RuleMethod["min"] = r.Min
 	return r
 }
 
@@ -155,6 +158,52 @@ func (r *Rule) In(value interface{}, rule string, data map[string]interface{}, a
 // 验证某个字段的值是否不在指定的值内
 func (r *Rule) NotIn(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
 	return !r.In(value, rule, data, arg...)
+}
+
+/**
+ * 最大值限制
+ * 当类型为数值时，判断数值大小
+ * 当类型为切片/字符串/通道时，判断成员数或者文本长度
+ * 其他类型不进行判断
+ */
+func (r *Rule) Max(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	if len(arg) < 1 {
+		panic("Rule Max Error")
+		return false
+	}
+	if r.IsNumber(value, rule, data) {
+		return Float64(value) <= Float64(arg[0])
+	}
+	rv := reflect.ValueOf(value)
+	kind := rv.Kind()
+	switch kind {
+	case reflect.String:
+		return len(value.(string)) <= Int(arg[0])
+	}
+	return true
+}
+
+/**
+ * 最小值限制
+ * 当类型为数值时，判断数值大小
+ * 当类型为切片/字符串/通道时，判断成员数或者文本长度
+ * 其他类型不进行判断
+ */
+func (r *Rule) Min(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
+	if len(arg) < 1 {
+		panic("Rule Max Error")
+		return false
+	}
+	if r.IsNumber(value, rule, data) {
+		return Float64(value) > Float64(arg[0])
+	}
+	rv := reflect.ValueOf(value)
+	kind := rv.Kind()
+	switch kind {
+	case reflect.String:
+		return len(value.(string)) > Int(arg[0])
+	}
+	return true
 }
 
 // 判断是否在数组中

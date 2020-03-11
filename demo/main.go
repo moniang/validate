@@ -32,7 +32,7 @@ func main() {
 		"pass": "length:6,20",
 		"vali": "require|length:4",
 		"a":    "between:3,20",
-		"b":    "notIn:1,2,3",
+		"b":    "notIn:1,2,3|min:0",
 	}) // 设置验证规则
 
 	v.SetMsg(map[string]string{
