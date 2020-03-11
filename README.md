@@ -4,7 +4,7 @@ Go语言验证类
 ### 内置规则
 
 | 规则 | 备注 | 示例 |
-|:-|:-:|-:|
+|:-|:-|:-|
 |number|判断字段是否为数字|number|
 |chsAlohaNum|判断字段是否由汉字、字母和数字组成|chsAlohaNum|
 |alphaNum|判断字段是否由字母和数字组成|alphaNum|
