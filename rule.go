@@ -46,7 +46,7 @@ func (r *Rule) callRule(name string, value interface{}, rule string, data map[st
 	}
 }
 
-// 判断字段是否为数字，可独立调用
+// 判断字段是否为数字
 func (Rule) IsNumber(value interface{}, rule string, data map[string]interface{}, arg ...string) bool {
 	switch value.(type) {
 	case string:

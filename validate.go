@@ -5,12 +5,15 @@ import (
 	"strings"
 )
 
+type Validates map[string]string // 验证器所用的数据类型
+
 type Validate struct {
 	Rule                      //规则模块
-	typeMsg map[string]string // 默认规则提示
+	defaultErrorMsg Validates // 内置默认错误提示
+	typeMsg         Validates // 错误规则提示
 
 	rule      map[string][]string // 当前的验证规则
-	msg       map[string]string   // 用户自设提示消息
+	msg       Validates           // 用户自设提示消息
 	scene     map[string][]string // 验证场景
 	sceneName string              // 当前验证场景
 
@@ -20,17 +23,18 @@ type Validate struct {
 
 // 初始化验证类
 func (v *Validate) Init() *Validate {
-	v.typeMsg = make(map[string]string)
+	v.typeMsg = make(Validates)
 	v.rule = make(map[string][]string)
-	v.msg = make(map[string]string)
+	v.msg = make(Validates)
 	v.scene = make(map[string][]string)
 	v.checkRule = make(map[string][]string)
+	v.defaultErrorMsg = make(Validates)
 	v.initRule()
 	return v
 }
 
 // 规则验证
-func (v *Validate) Check(values map[string]interface{}) bool {
+func (v *Validate) Check(values map[string]interface{}, fail bool) bool {
 	var (
 		ruleValue []string
 	)
@@ -46,7 +50,10 @@ func (v *Validate) Check(values map[string]interface{}) bool {
 				} else {
 					value, _ := values[field]
 					if !v.callRule(rule, value, rule, values, ruleValue...) {
-						v.setError(field, rule)
+						v.setError(field, rule, ruleValue)
+						if fail {
+							panic(v.GetError())
+						}
 						return false
 					}
 				}
@@ -111,7 +118,7 @@ func (v *Validate) Scene(sceneName string) *Validate {
 }
 
 // 设置验证场景数据
-func (v *Validate) SetScene(scene map[string]string) *Validate {
+func (v *Validate) SetScene(scene Validates) *Validate {
 	// 直接赋值会覆盖掉，这样写,重复的覆盖，不重复的新增
 	var sceneKey []string
 	for key, value := range scene {
@@ -122,7 +129,7 @@ func (v *Validate) SetScene(scene map[string]string) *Validate {
 }
 
 // 设置规则
-func (v *Validate) SetRule(rule map[string]string) *Validate {
+func (v *Validate) SetRule(rule Validates) *Validate {
 	var ruleArray []string
 	for key, value := range rule {
 		ruleArray = strings.Split(value, "|")
@@ -133,7 +140,7 @@ func (v *Validate) SetRule(rule map[string]string) *Validate {
 }
 
 // 设置消息规则
-func (v *Validate) SetMsg(msg map[string]string) *Validate {
+func (v *Validate) SetMsg(msg Validates) *Validate {
 	// 直接赋值会覆盖掉，这样写,重复的覆盖，不重复的新增
 	for key, value := range msg {
 		v.msg[key] = value
@@ -142,7 +149,7 @@ func (v *Validate) SetMsg(msg map[string]string) *Validate {
 }
 
 // 设置错误信息
-func (v *Validate) setError(keyName string, ruleName string) {
+func (v *Validate) setError(keyName string, ruleName string, ruleValue ...interface{}) {
 	errorMsg, ok := v.msg[keyName+"."+ruleName]
 	if ok {
 		v.error = errorMsg
